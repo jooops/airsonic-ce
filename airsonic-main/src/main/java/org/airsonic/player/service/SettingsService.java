@@ -37,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.logging.LogFile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySource;
+import org.springframework.expression.ExpressionException;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.stereotype.Service;
 
@@ -586,11 +587,20 @@ public class SettingsService {
         Map<String, Object> context = contextSupplier.get();
         // StandardEvaluationContext spelCtx = new StandardEvaluationContext(context);
 
+        SpelExpressionParser parser = new SpelExpressionParser();
+        String[] resolved = new String[contextuals.length];
+        for (int i = 0; i < contextuals.length; i++) {
+            try {
+                resolved[i] = parser.parseExpression(contextuals[i]).getValue(context, String.class);
+            } catch (ExpressionException e) {
+                LOG.warn("Could not resolve contextual expression '%{{}}}' in '{}': {}", contextuals[i], s, e.getMessage());
+                return null;
+            }
+        }
+
         return StringUtils.replaceEach(s,
                 Stream.of(contextuals).map(x -> "%{" + x + "}").toArray(String[]::new),
-                Stream.of(contextuals)
-                        .map(x -> new SpelExpressionParser().parseExpression(x).getValue(context, String.class))
-                        .toArray(String[]::new));
+                resolved);
     }
 
     public String getGenreSeparators() {
