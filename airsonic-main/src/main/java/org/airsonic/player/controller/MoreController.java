@@ -86,7 +86,8 @@ public class MoreController {
         ModelAndView result = new ModelAndView();
         result.addObject("model", map);
         map.put("user", user);
-        map.put("uploadDirectory", uploadDirectory);
+        map.put("uploadDirectory", uploadDirectory == null ? "" : uploadDirectory);
+        map.put("uploadDirectoryUnresolved", uploadDirectory == null);
         map.put("genres", mediaFileService.getGenres(false));
         map.put("currentYear", LocalDate.now().getYear());
         map.put("musicFolders", musicFolders);
